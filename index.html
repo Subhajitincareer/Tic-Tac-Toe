@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: #f0f0f0;
+        }
+
+        .symbol-selection {
+            text-align: center;
+            margin: 20px;
+        }
+
+        .symbol-selection button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 10px;
+            cursor: pointer;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 5px;
+            width: 300px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 5px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+
+        .cell {
+            width: 100px;
+            height: 100px;
+            border: 2px solid #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 40px;
+            cursor: pointer;
+            background-color: #fff;
+            transition: background-color 0.3s;
+        }
+
+        .cell:hover {
+            background-color: #e0e0e0;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="symbol-selection" id="symbolSelection">
+        <button onclick="selectSymbol('X')">Play as X</button>
+        <button onclick="selectSymbol('O')">Play as O</button>
+    </div>
+
+    <div class="game-board" id="gameBoard">
+        <div class="cell" data-index="0"></div>
+        <div class="cell" data-index="1"></div>
+        <div class="cell" data-index="2"></div>
+        <div class="cell" data-index="3"></div>
+        <div class="cell" data-index="4"></div>
+        <div class="cell" data-index="5"></div>
+        <div class="cell" data-index="6"></div>
+        <div class="cell" data-index="7"></div>
+        <div class="cell" data-index="8"></div>
+    </div>
+
+    <div class="status" id="status"></div>
+
+    <script>
+        let currentPlayer;
+        let computerSymbol;
+        let cells = [];
+        let gameActive = false;
+        let isPlayerTurn = false;
+
+        function selectSymbol(symbol) {
+            currentPlayer = symbol;
+            computerSymbol = symbol === 'X' ? 'O' : 'X';
+            cells = Array(9).fill('');
+            document.getElementById('symbolSelection').style.display = 'none';
+            document.getElementById('gameBoard').style.display = 'grid';
+            gameActive = true;
+            isPlayerTurn = symbol === 'X';
+            updateStatus();
+            if (!isPlayerTurn) {
+                setTimeout(computerMove, 500);
+            }
+        }
+
+        function handleCellClick(index) {
+            if (!gameActive || cells[index] !== '' || !isPlayerTurn) return;
+
+            cells[index] = currentPlayer;
+            updateCellUI(index);
+
+            if (checkWin(currentPlayer)) {
+                endGame('You win!');
+            } else if (checkDraw()) {
+                endGame('Draw!');
+            } else {
+                isPlayerTurn = false;
+                updateStatus();
+                setTimeout(computerMove, 500);
+            }
+        }
+
+        function computerMove() {
+            if (!gameActive) return;
+
+            const emptyCells = cells.reduce((acc, cell, index) => {
+                if (cell === '') acc.push(index);
+                return acc;
+            }, []);
+
+            if (emptyCells.length === 0) return;
+
+            const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+            cells[randomIndex] = computerSymbol;
+            updateCellUI(randomIndex);
+
+            if (checkWin(computerSymbol)) {
+                endGame('Computer wins!');
+            } else if (checkDraw()) {
+                endGame('Draw!');
+            } else {
+                isPlayerTurn = true;
+                updateStatus();
+            }
+        }
+
+        function checkWin(symbol) {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],
+                [0, 4, 8], [2, 4, 6]
+            ];
+            return winPatterns.some(pattern =>
+                pattern.every(index => cells[index] === symbol)
+            );
+        }
+
+        function checkDraw() {
+            return cells.every(cell => cell !== '');
+        }
+
+        function endGame(message) {
+            gameActive = false;
+            document.getElementById('status').textContent = message;
+            setTimeout(resetGame, 2000);
+        }
+
+        function resetGame() {
+            cells = Array(9).fill('');
+            document.querySelectorAll('.cell').forEach(cell => {
+                cell.textContent = '';
+            });
+            document.getElementById('symbolSelection').style.display = 'block';
+            document.getElementById('gameBoard').style.display = 'none';
+            document.getElementById('status').textContent = '';
+            gameActive = false;
+            isPlayerTurn = false;
+        }
+
+        function updateStatus() {
+            const statusElement = document.getElementById('status');
+            if (!gameActive) {
+                statusElement.textContent = '';
+                return;
+            }
+            statusElement.textContent = isPlayerTurn ? 'Your turn' : 'Computer\'s turn...';
+        }
+
+        function updateCellUI(index) {
+            const cell = document.querySelector(`[data-index="${index}"]`);
+            cell.textContent = cells[index];
+        }
+
+        document.querySelectorAll('.cell').forEach(cell => {
+            cell.addEventListener('click', () => {
+                const index = parseInt(cell.getAttribute('data-index'));
+                handleCellClick(index);
+            });
+        });
+    </script>
+</body>
+</html>
