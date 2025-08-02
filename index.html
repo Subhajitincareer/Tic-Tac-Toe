@@ -1,202 +1,382 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Tic Tac Toe</title>
     <style>
+        /* Reset and base */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             flex-direction: column;
             align-items: center;
-            background-color: #f0f0f0;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background-color: #282c34;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 20px;
         }
 
+        /* Symbol selection container */
         .symbol-selection {
             text-align: center;
-            margin: 20px;
+            margin-bottom: 30px;
         }
 
         .symbol-selection button {
-            font-size: 18px;
-            padding: 10px 20px;
-            margin: 10px;
+            background-color: transparent;
+            border: 2px solid #61dafb;
+            color: #61dafb;
+            font-weight: bold;
+            font-size: 20px;
+            padding: 12px 24px;
+            margin: 0 15px;
             cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s, color 0.3s;
+            outline-offset: 2px;
         }
 
+        .symbol-selection button:hover,
+        .symbol-selection button:focus {
+            background-color: #61dafb;
+            color: #282c34;
+            outline: none;
+        }
+
+        /* Game board container */
         .game-board {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 5px;
-            width: 300px;
-            margin: 20px auto;
-            background-color: #fff;
-            padding: 5px;
-            border-radius: 10px;
-            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 8px;
+            background-color: #20232a;
+            padding: 15px;
+            border-radius: 15px;
+            box-shadow: 0 5px 20px rgba(97, 218, 251, 0.5);
+            user-select: none;
         }
 
+        @media (max-width: 400px) {
+            .game-board {
+                grid-template-columns: repeat(3, 80px);
+                grid-template-rows: repeat(3, 80px);
+                gap: 6px;
+            }
+
+            .cell {
+                width: 80px;
+                height: 80px;
+                font-size: 36px;
+            }
+        }
+
+        /* Board cells */
         .cell {
-            width: 100px;
-            height: 100px;
-            border: 2px solid #333;
+            background: #282c34;
+            border: 3px solid #61dafb;
+            border-radius: 12px;
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 40px;
+            font-size: 48px;
+            font-weight: 900;
+            color: #61dafb;
             cursor: pointer;
-            background-color: #fff;
-            transition: background-color 0.3s;
+            transition: background-color 0.25s, transform 0.15s;
+            position: relative;
+            outline-offset: 3px;
         }
 
-        .cell:hover {
-            background-color: #e0e0e0;
+        .cell:focus-visible {
+            outline: 3px solid #21a1f1;
+            outline-offset: 3px;
         }
 
+        .cell:hover:not(.filled) {
+            background-color: #3a3f4b;
+            transform: scale(1.1);
+            transition: background-color 0.15s, transform 0.15s;
+        }
+
+        .cell.filled {
+            cursor: default;
+            color: #fff;
+            text-shadow:
+                0 0 7px rgba(97, 218, 251, 0.8),
+                0 0 15px rgba(97, 218, 251, 0.6);
+            transform: scale(1);
+        }
+
+        .cell.winning {
+            background-color: #21a1f1;
+            color: #fff;
+            box-shadow: 0 0 12px 4px #21a1f1;
+            cursor: default;
+            transform: scale(1.15);
+            animation: pulse 1.6s infinite ease-in-out;
+        }
+
+        @keyframes pulse {
+
+            0%,
+            100% {
+                box-shadow: 0 0 12px 4px #21a1f1;
+            }
+
+            50% {
+                box-shadow: 0 0 18px 6px #61dafb;
+            }
+        }
+
+        /* Status text */
         .status {
+            margin: 30px 0 15px 0;
+            font-size: 26px;
+            font-weight: 700;
+            min-height: 36px;
+            color: #61dafb;
             text-align: center;
-            font-size: 24px;
-            margin: 20px;
-            color: #333;
+            min-width: 280px;
+        }
+
+        /* Restart button */
+        .restart-btn {
+            background-color: #61dafb;
+            border: none;
+            font-size: 18px;
+            font-weight: 700;
+            color: #282c34;
+            padding: 10px 30px;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 0 12px #61dafb99;
+            transition: background-color 0.3s;
+            user-select: none;
+            margin-bottom: 20px;
+            align-self: center;
+            display: none;
+            /* Initially hidden */
+        }
+
+        .restart-btn:hover,
+        .restart-btn:focus {
+            background-color: #21a1f1;
+            outline: none;
+            box-shadow: 0 0 18px #21a1f1cc;
         }
     </style>
 </head>
+
 <body>
     <div class="symbol-selection" id="symbolSelection">
-        <button onclick="selectSymbol('X')">Play as X</button>
-        <button onclick="selectSymbol('O')">Play as O</button>
+        <button id="playX" aria-label="Play as X">Play as X</button>
+        <button id="playO" aria-label="Play as O">Play as O</button>
     </div>
 
-    <div class="game-board" id="gameBoard">
-        <div class="cell" data-index="0"></div>
-        <div class="cell" data-index="1"></div>
-        <div class="cell" data-index="2"></div>
-        <div class="cell" data-index="3"></div>
-        <div class="cell" data-index="4"></div>
-        <div class="cell" data-index="5"></div>
-        <div class="cell" data-index="6"></div>
-        <div class="cell" data-index="7"></div>
-        <div class="cell" data-index="8"></div>
+    <div class="game-board" id="gameBoard" tabindex="0" aria-label="Tic Tac Toe game board" role="grid"
+        aria-live="polite" aria-disabled="true" style="display:none">
+        <div class="cell" data-index="0" role="gridcell" tabindex="0" aria-label="Cell 1"></div>
+        <div class="cell" data-index="1" role="gridcell" tabindex="0" aria-label="Cell 2"></div>
+        <div class="cell" data-index="2" role="gridcell" tabindex="0" aria-label="Cell 3"></div>
+        <div class="cell" data-index="3" role="gridcell" tabindex="0" aria-label="Cell 4"></div>
+        <div class="cell" data-index="4" role="gridcell" tabindex="0" aria-label="Cell 5"></div>
+        <div class="cell" data-index="5" role="gridcell" tabindex="0" aria-label="Cell 6"></div>
+        <div class="cell" data-index="6" role="gridcell" tabindex="0" aria-label="Cell 7"></div>
+        <div class="cell" data-index="7" role="gridcell" tabindex="0" aria-label="Cell 8"></div>
+        <div class="cell" data-index="8" role="gridcell" tabindex="0" aria-label="Cell 9"></div>
     </div>
 
     <div class="status" id="status"></div>
+    <button class="restart-btn" id="restartBtn">Restart Game</button>
 
     <script>
-        let currentPlayer;
-        let computerSymbol;
-        let cells = [];
-        let gameActive = false;
-        let isPlayerTurn = false;
-
-        function selectSymbol(symbol) {
-            currentPlayer = symbol;
-            computerSymbol = symbol === 'X' ? 'O' : 'X';
-            cells = Array(9).fill('');
-            document.getElementById('symbolSelection').style.display = 'none';
-            document.getElementById('gameBoard').style.display = 'grid';
-            gameActive = true;
-            isPlayerTurn = symbol === 'X';
-            updateStatus();
-            if (!isPlayerTurn) {
-                setTimeout(computerMove, 500);
-            }
-        }
-
-        function handleCellClick(index) {
-            if (!gameActive || cells[index] !== '' || !isPlayerTurn) return;
-
-            cells[index] = currentPlayer;
-            updateCellUI(index);
-
-            if (checkWin(currentPlayer)) {
-                endGame('You win!');
-            } else if (checkDraw()) {
-                endGame('Draw!');
-            } else {
-                isPlayerTurn = false;
-                updateStatus();
-                setTimeout(computerMove, 500);
-            }
-        }
-
-        function computerMove() {
-            if (!gameActive) return;
-
-            const emptyCells = cells.reduce((acc, cell, index) => {
-                if (cell === '') acc.push(index);
-                return acc;
-            }, []);
-
-            if (emptyCells.length === 0) return;
-
-            const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
-            cells[randomIndex] = computerSymbol;
-            updateCellUI(randomIndex);
-
-            if (checkWin(computerSymbol)) {
-                endGame('Computer wins!');
-            } else if (checkDraw()) {
-                endGame('Draw!');
-            } else {
-                isPlayerTurn = true;
-                updateStatus();
-            }
-        }
-
-        function checkWin(symbol) {
+        (function () {
+            let currentPlayer;
+            let computerSymbol;
+            let cells = [];
+            let gameActive = false;
+            let isPlayerTurn = false;
             const winPatterns = [
-                [0, 1, 2], [3, 4, 5], [6, 7, 8],
-                [0, 3, 6], [1, 4, 7], [2, 5, 8],
-                [0, 4, 8], [2, 4, 6]
+                [0, 1, 2], [3, 4, 5], [6, 7, 8],   // Rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8],   // Columns
+                [0, 4, 8], [2, 4, 6]               // Diagonals
             ];
-            return winPatterns.some(pattern =>
-                pattern.every(index => cells[index] === symbol)
-            );
-        }
 
-        function checkDraw() {
-            return cells.every(cell => cell !== '');
-        }
+            const symbolSelection = document.getElementById('symbolSelection');
+            const gameBoard = document.getElementById('gameBoard');
+            const statusEl = document.getElementById('status');
+            const restartBtn = document.getElementById('restartBtn');
+            const cellsEls = Array.from(document.querySelectorAll('.cell'));
 
-        function endGame(message) {
-            gameActive = false;
-            document.getElementById('status').textContent = message;
-            setTimeout(resetGame, 2000);
-        }
+            // Add event listeners for symbol selection buttons
+            document.getElementById('playX').addEventListener('click', () => selectSymbol('X'));
+            document.getElementById('playO').addEventListener('click', () => selectSymbol('O'));
 
-        function resetGame() {
-            cells = Array(9).fill('');
-            document.querySelectorAll('.cell').forEach(cell => {
-                cell.textContent = '';
+            // Restart button listener
+            restartBtn.addEventListener('click', resetGame);
+
+            // Add click and keyboard event listeners on cells
+            cellsEls.forEach(cell => {
+                cell.addEventListener('click', () => {
+                    const index = parseInt(cell.dataset.index);
+                    handleCellClick(index);
+                });
+
+                // Keyboard support for Enter and Space keys
+                cell.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        const index = parseInt(cell.dataset.index);
+                        handleCellClick(index);
+                    }
+                });
             });
-            document.getElementById('symbolSelection').style.display = 'block';
-            document.getElementById('gameBoard').style.display = 'none';
-            document.getElementById('status').textContent = '';
-            gameActive = false;
-            isPlayerTurn = false;
-        }
 
-        function updateStatus() {
-            const statusElement = document.getElementById('status');
-            if (!gameActive) {
-                statusElement.textContent = '';
-                return;
+            function selectSymbol(symbol) {
+                currentPlayer = symbol;
+                computerSymbol = symbol === 'X' ? 'O' : 'X';
+                cells = Array(9).fill('');
+                symbolSelection.style.display = 'none';
+                gameBoard.style.display = 'grid';
+                gameBoard.setAttribute('aria-disabled', 'false');
+                gameActive = true;
+                isPlayerTurn = symbol === 'X';
+                updateStatus();
+                clearBoardUI();
+                restartBtn.style.display = 'none';
+
+                if (!isPlayerTurn) {
+                    setTimeout(computerMove, 600);
+                }
             }
-            statusElement.textContent = isPlayerTurn ? 'Your turn' : 'Computer\'s turn...';
-        }
 
-        function updateCellUI(index) {
-            const cell = document.querySelector(`[data-index="${index}"]`);
-            cell.textContent = cells[index];
-        }
+            function handleCellClick(index) {
+                if (!gameActive || cells[index] !== '' || !isPlayerTurn) return;
 
-        document.querySelectorAll('.cell').forEach(cell => {
-            cell.addEventListener('click', () => {
-                const index = parseInt(cell.getAttribute('data-index'));
-                handleCellClick(index);
-            });
-        });
+                makeMove(index, currentPlayer);
+                if (checkWin(currentPlayer)) {
+                    highlightWin(currentPlayer);
+                    endGame('You win!');
+                } else if (checkDraw()) {
+                    endGame('Draw!');
+                } else {
+                    isPlayerTurn = false;
+                    updateStatus();
+                    setTimeout(computerMove, 600);
+                }
+            }
+
+            function computerMove() {
+                if (!gameActive) return;
+
+                const emptyCells = cells.reduce((acc, cell, index) => {
+                    if (cell === '') acc.push(index);
+                    return acc;
+                }, []);
+
+                if (emptyCells.length === 0) return;
+
+                // Simple AI: prefers center, corners then random
+                const preferredMoves = [4, 0, 2, 6, 8].filter(i => emptyCells.includes(i));
+                const choicePool = preferredMoves.length ? preferredMoves : emptyCells;
+                const randomIndex = choicePool[Math.floor(Math.random() * choicePool.length)];
+
+                makeMove(randomIndex, computerSymbol);
+                if (checkWin(computerSymbol)) {
+                    highlightWin(computerSymbol);
+                    endGame('Computer wins!');
+                } else if (checkDraw()) {
+                    endGame('Draw!');
+                } else {
+                    isPlayerTurn = true;
+                    updateStatus();
+                }
+            }
+
+            function makeMove(index, symbol) {
+                cells[index] = symbol;
+                updateCellUI(index);
+            }
+
+            function checkWin(symbol) {
+                return winPatterns.some(pattern => pattern.every(i => cells[i] === symbol));
+            }
+
+            function checkDraw() {
+                return cells.every(cell => cell !== '');
+            }
+
+            function endGame(message) {
+                gameActive = false;
+                gameBoard.setAttribute('aria-disabled', 'true');
+                updateStatus(message);
+                restartBtn.style.display = 'inline-block';
+            }
+
+            function resetGame() {
+                cells = Array(9).fill('');
+                clearBoardUI();
+                gameActive = false;
+                isPlayerTurn = false;
+                statusEl.textContent = '';
+                restartBtn.style.display = 'none';
+                symbolSelection.style.display = 'block';
+                gameBoard.style.display = 'none';
+                gameBoard.setAttribute('aria-disabled', 'true');
+            }
+
+            function updateStatus(message) {
+                if (message) {
+                    statusEl.textContent = message;
+                } else if (!gameActive) {
+                    statusEl.textContent = '';
+                } else {
+                    statusEl.textContent = isPlayerTurn ? "Your turn" : "Computer's turn...";
+                }
+            }
+
+            function updateCellUI(index) {
+                const cell = cellsEls[index];
+                cell.textContent = cells[index];
+                if (cells[index] !== '') {
+                    cell.classList.add('filled');
+                    cell.setAttribute('aria-label', `Cell ${index + 1} marked ${cells[index]}`);
+                    cell.setAttribute('tabindex', '-1');
+                } else {
+                    cell.classList.remove('filled');
+                    cell.setAttribute('aria-label', `Cell ${index + 1} empty`);
+                    cell.setAttribute('tabindex', '0');
+                }
+            }
+
+            function clearBoardUI() {
+                cellsEls.forEach(cell => {
+                    cell.textContent = '';
+                    cell.classList.remove('filled', 'winning');
+                    cell.setAttribute('aria-label', `Empty cell`);
+                    cell.setAttribute('tabindex', '0');
+                });
+            }
+
+            function highlightWin(symbol) {
+                const winningPattern = winPatterns.find(pattern =>
+                    pattern.every(index => cells[index] === symbol)
+                );
+                if (!winningPattern) return;
+
+                winningPattern.forEach(index => {
+                    cellsEls[index].classList.add('winning');
+                });
+            }
+
+            // Initialize game board visibility and state at load
+            resetGame();
+        })();
     </script>
 </body>
+
 </html>
